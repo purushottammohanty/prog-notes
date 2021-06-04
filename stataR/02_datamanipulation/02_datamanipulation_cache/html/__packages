@@ -14,3 +14,7 @@ pacman
 kableExtra
 formatR
 WDI
+data.table
+microbenchmark
+dtplyr
+tidyfast

@@ -1,5 +1,5 @@
 ---
-title: "Introduction to R for Stata Users"
+title: "R for Stata Users"
 author: "Purushottam Mohanty"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
@@ -186,35 +186,10 @@ y = "A"
 x + y # cannot be performed (numeric + character)
 ```
 
----
-
-# reading files
-
-Before we proceed to reading different file formats, let's set the base directory first,
-```{r eval=F}
-getwd() # getting current directory
-setwd('/Users/purushottam/Documents/GitHub/prog-notes/stataR') # setting directory
-```
-
-```{r eval=F}
-# comma delimited file
-library(readr)
-read_delim(file = './example.csv', delim = ',')
-# excel file (reads .xls and .xlsx files)
-library(readxl)
-read_excel(path = './example.xlsx', sheet = 'sheet1')
-# stata file
-library(haven)
-read_stata(file = './example.dta')
-# json file
-library(jsonlite)
-read_json(path = './example.json')
-```
-Similarly, there are other packages to load SAS, SPSS, TIFF or other files.
 
 ---
 
-# dataframes 
+# dataframes (1/n)
 
 Datasets in R are called `dataframe`. If you tried any of the functions listed earlier to read files you would notice that while they appear in the console, there is no way to access them. In order to do so, we need to store them as an object. This can be done using,
 ``` {r eval=F}
@@ -230,7 +205,7 @@ df = data.frame(names = c("London","Paris","Zurich","Madrid","Amsterdam"),
 
 ---
 
-# dataframes (cont.)
+# dataframes (2/n)
       
 For the current tutorial however we shall data from `gapminder` package. The package provides life expectancy, GDP per capita, and population data at the country level for every 5 years from 1952 to 2007.
 ``` {r}
@@ -240,7 +215,7 @@ df
 
 ---
 
-# indexing 
+# indexing (1/n)
 
 All elements within objects in R can be accessed using row and column index or names. R follows a consistent form of indexing which is applicable to all class of objects.     
     
@@ -252,7 +227,7 @@ df[1, 'lifeExp']
 
 ---
 
-# indexing (cont.)
+# indexing (2/n)
 
 Multiple rows or columns can also be indexed.
 ``` {r}
@@ -287,9 +262,40 @@ When such operations are perfomred on columns in a dataframe it is similar to us
 
 In R missing values are indicated by `NA` (without quotes). Unlike Stata which handles missing values differently for numeric and string data, in R, `NA` is treated as missing irrespective of the object type.    
     
-The function `is.na()` is a boolean operator (i.e. it only gives `TRUE` or `FALSE`) use to identify whether an object or element within an object is missing.     
+The function `is.na()` is a boolean operator (i.e. it only gives `TRUE` or `FALSE`) use to identify whether an object or element within an object is missing. When applied to a column in a dataframe it provides a list of `TRUE` or `FALSE` argument such that it is `TRUE` when the corresponding value for the row is missing.
     
-Another uselful function is `na.rm = TRUE`
+Another useful function is `na.rm = TRUE` which needs to be added as an option within many functions, most commonly to statistical functions such as `mean(X, na.rm = TRUE)`. It ensures that the `NA`s are not considered while evaluating the mean of object X. 
+
+---
+# logical operators
+
+Most logical operators in R are identical to that of Stata except a few. The operators `&`, `|`, `==`, `!=` are `AND`, `OR`, `EQUAL TO`, `NOT EQUAL TO` respectively and they are identical to that of Stata.
+
+
+---
+# reading files
+
+Before we proceed to reading different file formats, let's set the base directory first,
+```{r eval=F}
+getwd() # getting current directory
+setwd('/Users/purushottam/Documents/GitHub/prog-notes/stataR') # setting directory
+```
+
+```{r eval=F}
+# comma delimited file
+library(readr)
+read_delim(file = './example.csv', delim = ',')
+# excel file (reads .xls and .xlsx files)
+library(readxl)
+read_excel(path = './example.xlsx', sheet = 'sheet1')
+# stata file
+library(haven)
+read_stata(file = './example.dta')
+# json file
+library(jsonlite)
+read_json(path = './example.json')
+```
+Similarly, there are other packages to load SAS, SPSS, TIFF or other files.
 
 
 

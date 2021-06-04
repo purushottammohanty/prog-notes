@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="" xml:lang="">
   <head>
-    <title>Introduction to R for Stata Users</title>
+    <title>R for Stata Users</title>
     <meta charset="utf-8" />
     <meta name="author" content="Purushottam Mohanty" />
     <meta name="date" content="2021-06-04" />
@@ -14,7 +14,7 @@
     <textarea id="source">
 class: center, middle, inverse, title-slide
 
-# Introduction to R for Stata Users
+# R for Stata Users
 ## 01: Introduction
 ### Purushottam Mohanty
 ### 04 June 2021
@@ -216,7 +216,7 @@ Similarly, there are other packages to load SAS, SPSS, TIFF or other files.
 
 ---
 
-# dataframes 
+# dataframes (1/n)
 
 Datasets in R are called `dataframe`. If you tried any of the functions listed earlier to read files you would notice that while they appear in the console, there is no way to access them. In order to do so, we need to store them as an object. This can be done using,
 
@@ -234,7 +234,7 @@ df = data.frame(names = c("London","Paris","Zurich","Madrid","Amsterdam"),
 
 ---
 
-# dataframes (cont.)
+# dataframes (2/n)
       
 For the current tutorial however we shall data from `gapminder` package. The package provides life expectancy, GDP per capita, and population data at the country level for every 5 years from 1952 to 2007.
 
@@ -262,7 +262,7 @@ df
 
 ---
 
-# indexing 
+# indexing (1/n)
 
 All elements within objects in R can be accessed using row and column index or names. R follows a consistent form of indexing which is applicable to all class of objects.     
     
@@ -292,7 +292,7 @@ df[1, 'lifeExp']
 
 ---
 
-# indexing (cont.)
+# indexing (2/n)
 
 Multiple rows or columns can also be indexed.
 
@@ -345,7 +345,11 @@ When such operations are perfomred on columns in a dataframe it is similar to us
 ---
 # missing values
 
-
+In R missing values are indicated by `NA` (without quotes). Unlike Stata which handles missing values differently for numeric and string data, in R, `NA` is treated as missing irrespective of the object type.    
+    
+The function `is.na()` is a boolean operator (i.e. it only gives `TRUE` or `FALSE`) use to identify whether an object or element within an object is missing. When applied to a column in a dataframe it provides a list of `TRUE` or `FALSE` argument such that it is `TRUE` when the corresponding value for the row is missing.
+    
+Another useful function is `na.rm = TRUE` which needs to be added as an option within many functions, most commonly to statistical functions such as `mean(X, na.rm = TRUE)`. It ensures that the `NA`s are not considered while evaluating the mean of object X. 
 
 
 

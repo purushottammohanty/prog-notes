@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="" xml:lang="">
   <head>
-    <title>Introduction to R for Stata Users</title>
+    <title>R for Stata Users</title>
     <meta charset="utf-8" />
     <meta name="author" content="Purushottam Mohanty" />
-    <meta name="date" content="2021-06-04" />
+    <meta name="date" content="2021-06-05" />
     <script src="02_datamanipulation_files/header-attrs/header-attrs.js"></script>
     <link href="02_datamanipulation_files/remark-css/default.css" rel="stylesheet" />
     <link href="02_datamanipulation_files/remark-css/metropolis.css" rel="stylesheet" />
@@ -14,10 +14,10 @@
     <textarea id="source">
 class: center, middle, inverse, title-slide
 
-# Introduction to R for Stata Users
+# R for Stata Users
 ## 02: Data Manipulation
 ### Purushottam Mohanty
-### 04 June 2021
+### 05 June 2021
 
 ---
 
@@ -30,8 +30,14 @@ class: center, middle, inverse, title-slide
   }
 }
 
+# stata code chunk background colour
 .code-bg-stata .remark-code, .code-bg-stata .remark-code * {
  background-color:Gainsboro!important;
+}
+
+# count for a particular slide
+.hide-count .remark-slide-number {
+  display: none;
 }
 
 &lt;/style&gt;
@@ -670,12 +676,18 @@ df %&gt;%
 ##  4 Africa     1967  6447875.      2050.
 ##  5 Africa     1972  7305376.      2340.
 ##  6 Africa     1977  8328097.      2586.
-##  7 Africa     1982  9602857.      2482.
-##  8 Africa     1987 11054502.      2283.
-##  9 Africa     1992 12674645.      2282.
-## 10 Africa     1997 14304480.      2379.
-## # … with 50 more rows
+....
 ```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+bysort continent year: egen mean_pop = mean(pop)
+bysort continent year: egen mean_gdppc = mean(gdpPercap)
+collapse (mean) mean_pop mean_gdppc, by(continent year)
+```
+]
 
 ---
 # reshape - long to wide (1/n)
@@ -811,16 +823,17 @@ Two dataframes can be joined using using keys with the `*_join()` suite of funct
     
 3. `right_join(X, Y, by = "COL_NAME")` - includes all rows of Y       
     
-4. `full_join(X, Y, by = "COL_NAME")` - includes all rows of X or Y
-
+4. `full_join(X, Y, by = "COL_NAME")` - includes all rows of X or Y       
+      
 .code-bg-stata[
 
 ```r
 # Stata equivalent
-merge 1:1 `Y` using COL_NAME
-merge m:1 `Y` using COL_NAME
-merge 1:m `Y` using COL_NAME
-merge m:m `Y` using COL_NAME
+merge 1:1 COL_NAME using `Y` 
+merge m:1 COL_NAME using `Y` 
+merge 1:m COL_NAME using `Y` 
+merge m:m COL_NAME using `Y`
+keep if _merge == 3 # includes all rows of X and Y
 ```
 ]
 
@@ -857,10 +870,8 @@ df_presidents
 ---
 # merging dataframes (3/n)
 
-
 ```r
-df %&gt;% 
-  mutate(year = as.character(year)) %&gt;%
+df %&gt;% mutate(year = as.character(year)) %&gt;%
   left_join(df_presidents, by = "year")
 ```
 
@@ -875,17 +886,32 @@ df %&gt;%
 ##  5 Afghanistan Asia      1972     36.1 13079460      740.            55  
 ##  6 Afghanistan Asia      1977     38.4 14880372      786.            NA  
 ##  7 Afghanistan Asia      1982     39.9 12881816      978.            NA  
-##  8 Afghanistan Asia      1987     40.8 13867957      852.            NA  
-##  9 Afghanistan Asia      1992     41.7 16317921      649.            NA  
-## 10 Afghanistan Asia      1997     41.8 22227415      635.            NA  
-## # … with 1,694 more rows
+....
 ```
 Since the `datasets::presidents` only contained data from 1945 to 1974, merged values after 1974 are missing (coded as `NA`).
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+tostring year, replace
+merge 1:1 year using `df_presidents`
+keep if _merge == 1 | _merge == 2 # same as left_join()
+```
+]
 
 ---
 # appending rows
 
-Dataframes in R can be appended using the `dplyr::bind_rows()` function. The advantage of this function is that it appends the dataframes that have a different number of columns. The dataframes are appended based on column names. 
+Dataframes in R can be appended using the `dplyr::bind_rows()` function. The dataframes are appended based on column names however unlike many other R funtions, it allows appending dataframes even when dataframes have different number of columns. In this regard, it works almost exactly like Stata's `append` command. 
+
+```r
+df %&gt;%
+  filter(continent == "Europe") %&gt;%
+  bind_rows(df) # any dataframe can be provided
+```
+
+R objects are also often appended using the `baseR::rbind()` function. It also works similarly but the column length of the two dataframe must be identical. It can be used through the `rbind(DATAFRAME1, DATAFRAME2)` syntax.
 
 .code-bg-stata[
 
@@ -898,6 +924,34 @@ append using `Y`
 ---
 # rename columns
 
+There are a number of ways to rename columns in R. The easiest way is through the `dplyr::rename()` function which can be combined with the `%&gt;%` operator. 
+
+```r
+df %&gt;%
+  rename(country_name = country)
+```
+
+Similarly, multiple columns can be renamed using the following syntax,
+
+```r
+df %&gt;%
+  rename(country_name = country, continent_name = continent)
+```
+ 
+Columns can also be renamed using the `baseR::names()` funtion. 
+
+```r
+names(df)[1] = "country"
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+rename (country continent) (country_name continent_name)
+```
+]
+
 ---
 
 class: inverse, center, middle
@@ -908,6 +962,454 @@ name: data.table
 &lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=796px&gt;&lt;/html&gt;
 
 ---
+# intro
+
+Until now we've largely been using `dplyr` and `tidyr` (i.e. `tidyverse`) packages along with `baseR` where necessary. `data.table` is another data manipulation or wrangling package that displays the true power of R.    
+    
+Detailed documentation about data.table can be found at [CRAN](https://cran.r-project.org/web/packages/data.table/data.table.pdf) and further examples can be found at the data.table [vignette](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-intro.html).   
+    
+Unique advantages of `data.table` can be listed down as,
+1. insane speed (see next slide)    
+    
+2. concise code         
+    
+3. no dependency (stable code)      
+    
+4. memory efficient
+
+
+---
+# speed insanity
+
+
+```r
+pacman::p_load(data.table, microbenchmark)
+
+collapse_dplyr = function() {
+  storms %&gt;%
+    group_by(name, year, month, day) %&gt;% 
+    summarize(wind = mean(wind), pressure = mean(pressure), category = first(category))
+  }
+storms_dt = as.data.table(storms)
+collapse_dt = function() {
+  storms_dt[, .(wind = mean(wind), pressure = mean(pressure), category = first(category)),
+            by = .(name, year, month, day)]
+  }
+microbenchmark(collapse_dplyr(), collapse_dt(), times = 10)
+```
+
+```
+## Unit: milliseconds
+##              expr       min        lq      mean    median        uq      max
+##  collapse_dplyr() 70.498084 70.753126 71.958755 71.590896 73.525501 74.24587
+##     collapse_dt()  1.818668  1.831042  3.370017  1.957251  1.992418 13.38725
+....
+```
+
+Check the computation time difference between `data.table` and `dplyr`.
+
+---
+# data.table class
+
+As mentioned earlier, every object in R has it's own class and functions can be applied to that object depending on the class of the object.    
+    
+`tidyverse` converts dataframes into a tibble (`tbl_df` class) in order to operate on them. Similarly, `data.table` functions can be applied to an object of `data.table` class. There are few ways to do that.   
+    
+1. `data.table(x = 1:20, y = 50:70)` - to create data.table from scratch        
+    
+2.  `as.data.table()` - convert existing dataframes or tibbles to data.table        
+    
+3. `setDT()` - reference existing dataframe as data.table. It does not create a copy of the data unlike `as.data.table()` hence need not be assigned to a new object.           
+    
+4. `fread("./example.csv")` - imports csv file extremely fast as a data.table object.   
+
+
+---
+# operations
+
+The `data.table` function follows the following syntax `DT[i, j, by]` where **i** refers to row-wise operations, **j** refers to column wise-operations and **by** refers to group based operations.   
+
+The `dplyr` equivalents of such operations are:
+1. **i** - `filter()`, `arrange()`, `slice()`
+2. **j** - `mutate()`, `select()`
+3. **by** - `group_by()`, `add_count()`
+    
+For example,
+
+```r
+dt_storms = as.data.table(storms)
+dt_storms[status == "hurricane", mean(wind, na.rm=T), by = year]
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+keep if status == "hurricane"
+collapse (mean) wind, by(year)
+```
+]
+
+---
+# row operations (1/n)
+
+
+```r
+dt_storms[status == "hurricane",]
+```
+
+```
+##           name year month day hour  lat  long    status category wind pressure
+##    1: Caroline 1975     8  30    0 23.3 -94.2 hurricane        1   65      990
+##    2: Caroline 1975     8  30    6 23.5 -94.9 hurricane        1   65      990
+##    3: Caroline 1975     8  30   12 23.7 -95.6 hurricane        1   65      989
+##    4: Caroline 1975     8  30   18 23.8 -96.3 hurricane        1   70      987
+##    5: Caroline 1975     8  31    0 24.0 -97.0 hurricane        3  100      973
+##   ---                                                                         
+## 3087:  Joaquin 2015    10   7    6 40.3 -51.5 hurricane        1   65      977
+## 3088:     Kate 2015    11  11    0 33.1 -71.3 hurricane        1   65      990
+## 3089:     Kate 2015    11  11    6 35.2 -67.6 hurricane        1   70      985
+## 3090:     Kate 2015    11  11   12 36.2 -62.5 hurricane        1   75      980
+## 3091:     Kate 2015    11  11   18 37.6 -58.2 hurricane        1   65      980
+....
+```
+
+Note that `dt_storms[status == "hurricane"]` (without comma) is equivalent to the above operation. 
+.code-bg-stata[
+
+```r
+# Stata equivalent
+keep if status == "hurricane"
+```
+]
+
+---
+# row operations (2/n)
+
+
+```r
+dt_storms[status == "hurricane" &amp; year &gt; 2000 &amp; category &gt; 1,]
+```
+
+```
+##         name year month day hour  lat  long    status category wind pressure
+##   1:    Erin 2001     9   9    6 30.6 -61.3 hurricane        2   90      982
+##   2:    Erin 2001     9   9   12 31.5 -62.2 hurricane        2   95      979
+##   3:    Erin 2001     9   9   18 32.4 -62.8 hurricane        3  105      968
+##   4:    Erin 2001     9  10    0 33.3 -63.3 hurricane        3  105      969
+##   5:    Erin 2001     9  10    6 34.2 -64.1 hurricane        3  105      969
+##  ---                                                                        
+## 649: Joaquin 2015    10   3   18 26.3 -71.0 hurricane        4  130      934
+## 650: Joaquin 2015    10   4    0 27.4 -69.5 hurricane        4  115      941
+## 651: Joaquin 2015    10   4    6 28.9 -68.3 hurricane        3  105      949
+## 652: Joaquin 2015    10   4   12 30.4 -67.2 hurricane        2   95      956
+## 653: Joaquin 2015    10   4   18 31.6 -66.5 hurricane        2   85      958
+....
+```
+
+Note that `dt_storms[status == "hurricane"]` (without comma) is equivalent to the above operation. 
+.code-bg-stata[
+
+```r
+# Stata equivalent
+keep if status == "hurricane" &amp; year &gt; 2000 &amp; category &gt; 1
+```
+]
+
+---
+# column operations (1/n)
+
+The `data.table` equivalent of `mutate()` is the `:=` operator which works with reference (i.e. it changes the original data.table so assignment is not required).    
+      
+New columns can be created using the,
+- `dt_storms[, wind_scaled := wind / 100]`: creates new column `wind_scaled` from existing column `wind`.
+- `dt_storms[, wind := wind^2]`: changes exisitng column `wind`
+
+Note that results are not printed while make such changes. In order to print results, one has to mention `[]` after the end of the operation. For example,
+
+```r
+dt_storms[, wind := wind^2][]
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+generate wind_scaled = wind / 100
+replace wind = wind^2
+```
+]
+
+---
+# column operations (2/n)
+
+Columns can be removed from a data.table using the following syntax,
+
+```r
+dt_storms[, ts_diameter := NULL]
+```
+
+Note that for memory efficiency data.table functions work by reference implying that changes made to a copy of a data are reflected in the original data as well. For example,
+
+```r
+dt_storms = as.data.table(storms)
+dt_new = dt_storms
+dt_new[, ts_diameter := NULL] # also drop ts_diameter from dt_storms
+```
+This can be avoided by creating a true copy of the original data.table using `data.table::copy()`. For example,
+
+```r
+dt_storms = as.data.table(storms)
+dt_new = copy(dt_storms) 
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+drop ts_diameter
+```
+]
+
+---
+# column operations (3/n)
+
+In order to operate on **multiple columns** at once `data.table` provides two different options which perform identically.
+
+```r
+DT[, c("newCol1","newCol2") := .(col1, col2)]
+DT[, ':=' (newCol1=col1, newCol2=col2)]
+```
+
+Like `dplyr`, the `data.table` also allows the usage of the **pipe** `%&gt;%` operator but a `.` needs to be added at the beginning of any operation.
+
+```r
+DT %&gt;%
+  .[, newCol1 := col1] %&gt;%
+  .[, newCol2 := col2]
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+generate newCol1 = col1
+generate newCol2 = col2
+```
+]
+
+---
+# column operations (4/n)
+New data.table can be created from scratch using the `data.table()` function. For example, 
+
+```r
+dt = data.table(cities = c("London","Paris"), rent_eur = c(1800,1400))
+dt
+```
+
+```
+##    cities rent_eur
+## 1: London     1800
+## 2:  Paris     1400
+```
+
+data.table works by reference so it changes original data.table without assignment.
+
+```r
+dt[, rent_inr := rent_eur * 85] # references data.table (no assignment needed)
+dt
+```
+
+```
+##    cities rent_eur rent_inr
+## 1: London     1800   153000
+## 2:  Paris     1400   119000
+```
+
+
+---
+# column operations (5/n)
+
+Operations on a copy of data.table modifies the original data.table as well.
+
+```r
+dt_new = dt
+dt_new[, rent_eur := NULL]
+dt # original data.table has changed
+```
+
+```
+##    cities rent_inr
+## 1: London   153000
+## 2:  Paris   119000
+```
+
+Operations on true copy of data.table doesn't modify original data.table.
+
+```r
+dt = data.table(cities = c("London","Paris"), rent_eur = c(1800,1400))
+dt_new = copy(dt)
+dt_new[, cities := NULL]
+dt # original data.table unmodified
+```
+
+```
+##    cities rent_eur
+## 1: London     1800
+## 2:  Paris     1400
+```
+
+---
+# grouped operation (1/n)
+
+Grouped operation in data.table is straightforward and similar to `dplyr::group_by()` and Stata's `bysort` command. For example to obtain summary statistics by group,
+
+```r
+dt_storms[, mean(wind, na.rm = TRUE), by = .(status,category)]
+```
+
+In order to explicitly specify the new column name,
+
+```r
+dt_storms[, .(mean_wind = mean(wind, na.rm = TRUE)), by = .(status,category)]
+```
+
+In order to add mean values to a new column rather without summarizing (collapsing) the data.table, we can use,
+
+```r
+dt_storms[, mean_wind := mean(wind, na.rm = TRUE), by = .(status,category)]
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+bysort status category: egen mean_wind = mean(wind)
+collapse (mean) mean_wind, by(status category)
+collapse (mean) wind, by(status category) # same as above 2 lines together
+```
+]
+
+---
+# grouped operation (2/n)
+
+```r
+dt_storms[, .(mean_wind = mean(wind, na.rm = TRUE)), by = .(status,category)]
+```
+
+```
+##                 status category mean_wind
+## 1: tropical depression       -1  27.26916
+## 2:      tropical storm        0  45.80037
+## 3:           hurricane        1  70.91152
+## 4:           hurricane        3 104.64187
+## 5:           hurricane        2  89.43471
+## 6:           hurricane        5 145.07353
+## 7:           hurricane        4 121.55172
+## 8:      tropical storm        1  70.00000
+```
+
+
+```r
+dt_storms[!status == "tropical storm", .(mean_wind = mean(wind, na.rm = TRUE)),
+          by = .(status,category)]
+```
+
+```
+##                 status category mean_wind
+## 1: tropical depression       -1  27.26916
+## 2:           hurricane        1  70.91152
+## 3:           hurricane        3 104.64187
+## 4:           hurricane        2  89.43471
+## 5:           hurricane        5 145.07353
+## 6:           hurricane        4 121.55172
+```
+
+---
+# data.table features
+
+data.table has a number of other functions or features that take data manipulation to the next level in terms of speed and ease.       
+    
+- `data.table::setkey()` allows users to order the data.table on specified columns which makes any form of computation on that involving keys insanely fast. It can lead to *2-3x* gains over regular data.table and *100-200x* gains over dplyr operations.     
+      
+- `melt()` and `cast()` to reshape data to wide or long format 
+    
+- joining (merging) large data.table(s) incredibly fast using a combination of `on` option and `setkeys()` function.  
+      
+- `fread()` to import large csv files lightning fast. It can also import files from a zipped file without unzipping it. (Insane!) 
+
+---
+
+class: inverse, center, middle
+name: dplyr.data.table
+
+# dplyr + data.table
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=796px&gt;&lt;/html&gt;
+
+
+---
+# dtplyr package
+
+It is one of the most amazing packages out there which provides a data.table translation for dplyr code. It can be installed using `pacman::p_load(dtplyr)`.     
+
+
+In order to use dtplyr, the dataframe object has to be converted to lazy data.table class using,
+
+```r
+gapminder_dtplyr = lazy_dt(gapminder::gapminder)
+gapminder_dtplyr %&gt;%
+  filter(continent %in% c("Asia","Europe")) %&gt;%
+  group_by(continent, year) %&gt;%
+  summarize(mean_pop = mean(pop, na.rm=T), mean_gdppc = mean(gdpPercap, na.rm=T))
+```
+
+dtplyr automatically translates dplyr syntax to data.table equivalent in the backend. It is an effective way to take advantage of data.table without putting any effort into learning it's syntax.
+
+---
+# tidyfast package
+
+It provides tidying functions built on data.table that also accepts `%&gt;%` operator. The package can be installed using using `pacman::p_load(tidyfast)`. 
+
+
+Transformation from long to wide.
+
+```r
+dt = as.data.table(gapminder::gapminder) 
+dt_wide = dt %&gt;%
+  dt_pivot_wider(names_from = year, values_from = c(lifeExp, pop, gdpPercap))
+```
+
+Transformation from wide to long
+
+```r
+dt_wide %&gt;%
+  dt_pivot_longer(cols = c(-continent, -country), names_to = "type_year",
+                  values_to = "values") %&gt;%
+  .[, c("type","year") :=  tstrsplit(type_year, "_", fixed=TRUE)] %&gt;%
+  .[, type_year := NULL] %&gt;%
+  dt_pivot_wider(names_from = type, values_from = values)
+```
+
+
+---
+# some important points
+
+- R is versatile and provides different functions to perform the similar task. It is the user's job to decide which is the appropriate function to use.            
+    
+- Do not be hell bent to fit every data manipulation exercise into a `dplyr` vs `data.table` problem. The correct way is to use both of them along with other packages depending on the requirement.        
+    
+- Remember whatever issue you're trying to solve has more often than not already been solved. Your job is to find the right answer. In other words, google and stackoverflow is your answer to every problem.     
+    
+- The easiest way to learn is to do. I believe it's better to straightaway jump into a task rather than read guides to no avail. Pick a task you already performed in Stata and try replicating in R. 
+
+---
+class: inverse, center, middle
+name: thank.you
+
+# thank you
+
+
 
 
 
