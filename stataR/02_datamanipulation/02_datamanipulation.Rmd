@@ -357,7 +357,31 @@ df %>%
 
 
 ---
-# group operations
+# group operations (1/n)
+
+Grouped row operations can be performed using the `dplyr::group_by()` function. 
+```{r, eval=F}
+df %>% 
+  group_by(continent, year) %>% # grouping variables
+  mutate(mean_pop = mean(pop)) # group wise operation to perform
+```
+
+The `dplyr` pipe operation implies that dataset is grouped as long as a separate `ungroup()` function is provided. It's a healthy practice to provide `ungroup()` function after the end of the grouped operation.
+```{r, eval=F}
+df %>% 
+  group_by(continent, year) %>% # grouping variables
+  mutate(mean_pop = mean(pop)) %>% # group wise operation to perform
+  ungroup() %>% # dataframe is now ungrouped
+  mutate(mean_gdppc = mean(gdpPercap)) # ungrouped operation
+```
+
+.code-bg-stata[
+```{r, eval=F}
+# Stata equivalent
+bysort continent year: egen mean_pop = mean(pop)
+egen mean_gdppc = mean(gdpPercap)
+```
+]
 
 
 ---
