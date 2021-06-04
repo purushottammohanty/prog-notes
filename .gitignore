@@ -1,2 +1,6 @@
 # Ignore Mac system files
 .DS_store
+
+.rdb
+.rdx
+.RData
