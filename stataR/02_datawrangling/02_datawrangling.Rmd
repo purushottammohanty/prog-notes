@@ -13,7 +13,7 @@ output:
       highlightLines: yes
       countIncrementalSlides: no
   pdf_document: default
-subtitle: '02: Data Manipulation'
+subtitle: '02: Data Wrangling'
 ---
 
 ```{css, echo=FALSE}
@@ -72,7 +72,7 @@ knitr::knit_hooks$set(output = function(x, options) {
 
 # overview
 
-Data manipulation or data cleaning is an important aspect of any project and it is important to be well acquainted with all the tools provided by R to facilitate an easy transition from Stata to R.   
+Data wrangling or cleaning is an important aspect of any project and it is important to be well acquainted with all the tools provided by R to facilitate an easy transition from Stata to R.   
     
 While Stata has specific commands for specific data cleaning operations, R is more versatile and often the same operation can be performed in multiple ways through different packages.           
       
@@ -925,7 +925,7 @@ dt_wide %>%
 
 - R is versatile and provides different functions to perform the similar task. It is the user's job to decide which is the appropriate function to use.            
     
-- Do not be hell bent to fit every data manipulation exercise into a `dplyr` vs `data.table` problem. The correct way is to use both of them along with other packages depending on the requirement.        
+- Do not be hell bent to fit every data wrangling exercise into a `dplyr` vs `data.table` problem. The correct way is to use both of them along with other packages depending on the requirement.        
     
 - Remember whatever issue you're trying to solve has more often than not already been solved. Your job is to find the right answer. In other words, google and stackoverflow is your answer to every problem.     
     
@@ -942,7 +942,7 @@ name: thank.you
 
 
 ```{r gen_pdf, include = FALSE, cache = FALSE, eval = FALSE, warning=FALSE}
-pagedown::chrome_print("02_datamanipulation.html", output = "02_datamanipulation.pdf")
+pagedown::chrome_print("02_datawrangling.html", output = "02_datawrangling.pdf")
 ```
 
 

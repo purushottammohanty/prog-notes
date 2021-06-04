@@ -5,17 +5,17 @@
     <meta charset="utf-8" />
     <meta name="author" content="Purushottam Mohanty" />
     <meta name="date" content="2021-06-05" />
-    <script src="02_datamanipulation_files/header-attrs/header-attrs.js"></script>
-    <link href="02_datamanipulation_files/remark-css/default.css" rel="stylesheet" />
-    <link href="02_datamanipulation_files/remark-css/metropolis.css" rel="stylesheet" />
-    <link href="02_datamanipulation_files/remark-css/metropolis-fonts.css" rel="stylesheet" />
+    <script src="02_datawrangling_files/header-attrs/header-attrs.js"></script>
+    <link href="02_datawrangling_files/remark-css/default.css" rel="stylesheet" />
+    <link href="02_datawrangling_files/remark-css/metropolis.css" rel="stylesheet" />
+    <link href="02_datawrangling_files/remark-css/metropolis-fonts.css" rel="stylesheet" />
   </head>
   <body>
     <textarea id="source">
 class: center, middle, inverse, title-slide
 
 # R for Stata Users
-## 02: Data Manipulation
+## 02: Data Wrangling
 ### Purushottam Mohanty
 ### 05 June 2021
 
@@ -47,7 +47,7 @@ class: center, middle, inverse, title-slide
 
 # overview
 
-Data manipulation or data cleaning is an important aspect of any project and it is important to be well acquainted with all the tools provided by R to facilitate an easy transition from Stata to R.   
+Data wrangling or cleaning is an important aspect of any project and it is important to be well acquainted with all the tools provided by R to facilitate an easy transition from Stata to R.   
     
 While Stata has specific commands for specific data cleaning operations, R is more versatile and often the same operation can be performed in multiple ways through different packages.           
       
@@ -1001,8 +1001,8 @@ microbenchmark(collapse_dplyr(), collapse_dt(), times = 10)
 ```
 ## Unit: milliseconds
 ##              expr       min        lq      mean    median        uq      max
-##  collapse_dplyr() 70.498084 70.753126 71.958755 71.590896 73.525501 74.24587
-##     collapse_dt()  1.818668  1.831042  3.370017  1.957251  1.992418 13.38725
+##  collapse_dplyr() 71.291084 71.845626 73.977101 73.621313 76.047584 77.17029
+##     collapse_dt()  1.811542  1.834375  3.302338  1.996439  2.510667 11.72592
 ....
 ```
 
@@ -1397,7 +1397,7 @@ dt_wide %&gt;%
 
 - R is versatile and provides different functions to perform the similar task. It is the user's job to decide which is the appropriate function to use.            
     
-- Do not be hell bent to fit every data manipulation exercise into a `dplyr` vs `data.table` problem. The correct way is to use both of them along with other packages depending on the requirement.        
+- Do not be hell bent to fit every data wrangling exercise into a `dplyr` vs `data.table` problem. The correct way is to use both of them along with other packages depending on the requirement.        
     
 - Remember whatever issue you're trying to solve has more often than not already been solved. Your job is to find the right answer. In other words, google and stackoverflow is your answer to every problem.     
     

@@ -1,4 +1,5 @@
 base
+pacman
 knitr
 tidyverse
 ggplot2
@@ -10,10 +11,8 @@ dplyr
 stringr
 forcats
 pagedown
-pacman
 kableExtra
 formatR
-WDI
 data.table
 microbenchmark
 dtplyr
