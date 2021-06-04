@@ -1,7 +1,7 @@
 This repository contains slide decks and notes on R, Stata and Python programming tools.
  
 ## stataR: Introduction to R for Stata Users
-It contains notes on R programming for Stata users. It is especially useful for Stata users who are trying to learn R. It contains notes on most useful R functions and other tools that may come handy in R. 
+It contains notes on R programming for Stata users. It is especially useful for Stata users who are trying to learn R and also provides equivalent functions in Stata. It contains notes on most useful R functions and other tools that may come handy in R. 
 1. Introduction: [[slide-deck(.pdf)](https://github.com/purushottammohanty/prog-notes/blob/main/stataR/01_intro/01_stataR.pdf)]
 2. Data Wrangling [[slide-deck(.pdf)](https://github.com/purushottammohanty/prog-notes/blob/main/stataR/02_datawrangling/01_datawrangling.pdf)]
 
