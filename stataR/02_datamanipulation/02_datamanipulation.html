@@ -885,6 +885,16 @@ Since the `datasets::presidents` only contained data from 1945 to 1974, merged v
 ---
 # appending rows
 
+Dataframes in R can be appended using the `dplyr::bind_rows()` function. The advantage of this function is that it appends the dataframes that have a different number of columns. The dataframes are appended based on column names. 
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+append using `Y`
+```
+]
+
 ---
 # rename columns
 
