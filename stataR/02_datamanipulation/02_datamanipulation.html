@@ -31,7 +31,7 @@ class: center, middle, inverse, title-slide
 }
 
 .code-bg-stata .remark-code, .code-bg-stata .remark-code * {
- background-color:Silver!important;
+ background-color:Gainsboro!important;
 }
 
 &lt;/style&gt;
@@ -98,7 +98,7 @@ The first line can be read as, specifying the dataframe, filtering the rows and 
 class: inverse, center, middle
 name: dplyr
 
-# dplyr
+# dplyr | tidyr
 
 &lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=796px&gt;&lt;/html&gt;
 
@@ -609,6 +609,15 @@ df %&gt;%
 ## 1 29601212.     7215.
 ```
 
+.code-bg-stata[
+
+```r
+# Stata equivalent
+bysort continent year: egen mean_pop = mean(pop)
+bysort continent year: egen median_gdppc = median(gdpPercap)
+collapse (mean) mean_pop median_gdppc, by(continent year)
+```
+]
 
 ---
 # group operations (1/n)
@@ -621,7 +630,7 @@ df %&gt;%
   mutate(mean_pop = mean(pop)) # group wise operation to perform
 ```
 
-The `dplyr` pipe operation implies that dataset is grouped as long as a separate `ungroup()` function is provided. It's a healthy practice to provide `ungroup()` function after the end of the grouped operation.
+The `dplyr` pipe operation implies that dataset is grouped as long as a separate `ungroup()` function is provided. It's a healthy practice to provide `ungroup()` function after the end of the grouped operation to avoid confusion.
 
 ```r
 df %&gt;% 
@@ -640,21 +649,244 @@ egen mean_gdppc = mean(gdpPercap)
 ```
 ]
 
+---
+# group operations (2/n)
+
+
+```r
+df %&gt;% 
+  group_by(continent, year) %&gt;% # grouping variables
+  summarize(mean_pop = mean(pop), mean_gdppc = mean(gdpPercap)) # group wise operation
+```
+
+```
+## # A tibble: 60 x 4
+## # Groups:   continent [5]
+##    continent  year  mean_pop mean_gdppc
+##    &lt;fct&gt;     &lt;int&gt;     &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Africa     1952  4570010.      1253.
+##  2 Africa     1957  5093033.      1385.
+##  3 Africa     1962  5702247.      1598.
+##  4 Africa     1967  6447875.      2050.
+##  5 Africa     1972  7305376.      2340.
+##  6 Africa     1977  8328097.      2586.
+##  7 Africa     1982  9602857.      2482.
+##  8 Africa     1987 11054502.      2283.
+##  9 Africa     1992 12674645.      2282.
+## 10 Africa     1997 14304480.      2379.
+## # … with 50 more rows
+```
 
 ---
-# reshape - long to wide
+# reshape - long to wide (1/n)
+
+Dataframes can be transformed from long to wide using the `tidyr::pivot_wider()` function. Here's how the long dataframe looks.
+
+
+```r
+df 
+```
+
+```
+## # A tibble: 1,704 x 6
+##    country     continent  year lifeExp      pop gdpPercap
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;
+##  1 Afghanistan Asia       1952    28.8  8425333      779.
+##  2 Afghanistan Asia       1957    30.3  9240934      821.
+##  3 Afghanistan Asia       1962    32.0 10267083      853.
+##  4 Afghanistan Asia       1967    34.0 11537966      836.
+##  5 Afghanistan Asia       1972    36.1 13079460      740.
+##  6 Afghanistan Asia       1977    38.4 14880372      786.
+##  7 Afghanistan Asia       1982    39.9 12881816      978.
+##  8 Afghanistan Asia       1987    40.8 13867957      852.
+##  9 Afghanistan Asia       1992    41.7 16317921      649.
+## 10 Afghanistan Asia       1997    41.8 22227415      635.
+## # … with 1,694 more rows
+```
+
+---
+# reshape - long to wide (2/n)
+
+Transforming from long to wide.
+
+```r
+df_wide = df %&gt;%
+  pivot_wider(names_from = year, values_from = c("lifeExp", "pop", "gdpPercap"))
+df_wide
+```
+
+```
+## # A tibble: 142 x 38
+##    country     continent lifeExp_1952 lifeExp_1957 lifeExp_1962 lifeExp_1967
+##    &lt;fct&gt;       &lt;fct&gt;            &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+##  1 Afghanistan Asia              28.8         30.3         32.0         34.0
+##  2 Albania     Europe            55.2         59.3         64.8         66.2
+##  3 Algeria     Africa            43.1         45.7         48.3         51.4
+##  4 Angola      Africa            30.0         32.0         34           36.0
+##  5 Argentina   Americas          62.5         64.4         65.1         65.6
+##  6 Australia   Oceania           69.1         70.3         70.9         71.1
+##  7 Austria     Europe            66.8         67.5         69.5         70.1
+....
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+reshape wide lifeExp pop gdpPercap, i(continent country) j(year)
+```
+]
+
+---
+# reshape - wide to long (3/n)
+Dataframes can be transformed from wide to long using the `tidyr::pivot_longer()` function. We can transform the dataframe created earlier by,
+
+
+
+```r
+df_wide %&gt;%
+  pivot_longer(cols = c(-continent, -country), names_to = c("type", "year"),
+               names_sep = "_", values_to = "values")
+```
+
+```
+## # A tibble: 5,112 x 5
+##    country     continent type    year  values
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;
+##  1 Afghanistan Asia      lifeExp 1952    28.8
+##  2 Afghanistan Asia      lifeExp 1957    30.3
+##  3 Afghanistan Asia      lifeExp 1962    32.0
+##  4 Afghanistan Asia      lifeExp 1967    34.0
+##  5 Afghanistan Asia      lifeExp 1972    36.1
+##  6 Afghanistan Asia      lifeExp 1977    38.4
+##  7 Afghanistan Asia      lifeExp 1982    39.9
+....
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+reshape long lifeExp pop gdpPercap, i(continent country) j(year)
+```
+]
+
+---
+# reshape - wide to long (4/n)
+
+You might have noticed that the long data doesn't look like the original long data. The original data was partially long, so we'll have to convert it back to wide.
+
+```r
+df_wide %&gt;% # wide data
+  pivot_longer(cols = c(-continent, -country), names_to = c("type", "year"),
+               names_sep = "_", values_to = "values") %&gt;% # long data
+  pivot_wider(names_from = "type", values_from = "values") # original data
+```
+
+```
+## # A tibble: 1,704 x 6
+##    country     continent year  lifeExp      pop gdpPercap
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+##  1 Afghanistan Asia      1952     28.8  8425333      779.
+##  2 Afghanistan Asia      1957     30.3  9240934      821.
+##  3 Afghanistan Asia      1962     32.0 10267083      853.
+##  4 Afghanistan Asia      1967     34.0 11537966      836.
+##  5 Afghanistan Asia      1972     36.1 13079460      740.
+##  6 Afghanistan Asia      1977     38.4 14880372      786.
+##  7 Afghanistan Asia      1982     39.9 12881816      978.
+##  8 Afghanistan Asia      1987     40.8 13867957      852.
+##  9 Afghanistan Asia      1992     41.7 16317921      649.
+## 10 Afghanistan Asia      1997     41.8 22227415      635.
+## # … with 1,694 more rows
+```
 
 
 ---
-# reshape (cont.) - wide to long
+# merging dataframes (1/n)
 
+Two dataframes can be joined using using keys with the `*_join()` suite of functions. Dataframe X and Y can be merged using, 
+1. `inner_join(X, Y, by = "COL_NAME")` - includes all rows of X and Y.    
+    
+2. `left_join(X, Y, by = "COL_NAME")` - includes all rows of X        
+    
+3. `right_join(X, Y, by = "COL_NAME")` - includes all rows of Y       
+    
+4. `full_join(X, Y, by = "COL_NAME")` - includes all rows of X or Y
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+merge 1:1 `Y` using COL_NAME
+merge m:1 `Y` using COL_NAME
+merge 1:m `Y` using COL_NAME
+merge m:m `Y` using COL_NAME
+```
+]
 
 ---
-# merging columns
+# merging dataframes (2/n)
 
+Let's use the approval ratings of US Presidents from `datasets::presidents`, which is pre-installed in R and merge it with the `gapminder::gapminder` data. The data is a quarterly time-series data so we perform some basic manipulation first.
+
+
+```r
+df_presidents = data.frame(year = time(datasets::presidents),
+                           rating = as.matrix(datasets::presidents)) %&gt;%
+  mutate(year = substr(year,1,4)) %&gt;%
+  group_by(year) %&gt;%
+  summarise(approval_rating = mean(rating, na.rm=T)) # rating by year
+
+df_presidents
+```
+
+```
+## # A tibble: 30 x 2
+##    year  approval_rating
+##    &lt;chr&gt;           &lt;dbl&gt;
+##  1 1945             81.3
+##  2 1946             47  
+##  3 1947             51  
+##  4 1948             37.5
+##  5 1949             58.5
+##  6 1950             41.8
+##  7 1951             28.8
+....
+```
 
 ---
-# merging rows
+# merging dataframes (3/n)
+
+
+```r
+df %&gt;% 
+  mutate(year = as.character(year)) %&gt;%
+  left_join(df_presidents, by = "year")
+```
+
+```
+## # A tibble: 1,704 x 7
+##    country     continent year  lifeExp      pop gdpPercap approval_rating
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;chr&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;           &lt;dbl&gt;
+##  1 Afghanistan Asia      1952     28.8  8425333      779.            29.7
+##  2 Afghanistan Asia      1957     30.3  9240934      821.            65.2
+##  3 Afghanistan Asia      1962     32.0 10267083      853.            71.5
+##  4 Afghanistan Asia      1967     34.0 11537966      836.            45  
+##  5 Afghanistan Asia      1972     36.1 13079460      740.            55  
+##  6 Afghanistan Asia      1977     38.4 14880372      786.            NA  
+##  7 Afghanistan Asia      1982     39.9 12881816      978.            NA  
+##  8 Afghanistan Asia      1987     40.8 13867957      852.            NA  
+##  9 Afghanistan Asia      1992     41.7 16317921      649.            NA  
+## 10 Afghanistan Asia      1997     41.8 22227415      635.            NA  
+## # … with 1,694 more rows
+```
+Since the `datasets::presidents` only contained data from 1945 to 1974, merged values after 1974 are missing (coded as `NA`).
+
+---
+# appending rows
+
+---
+# rename columns
 
 ---
 

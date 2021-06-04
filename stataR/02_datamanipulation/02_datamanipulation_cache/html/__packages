@@ -10,3 +10,7 @@ dplyr
 stringr
 forcats
 pagedown
+pacman
+kableExtra
+formatR
+WDI

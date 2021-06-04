@@ -25,15 +25,19 @@ subtitle: '02: Data Manipulation'
 }
 
 .code-bg-stata .remark-code, .code-bg-stata .remark-code * {
- background-color:Silver!important;
+ background-color:Gainsboro!important;
 }
 
 ```
 
 
 ```{r setup, include=FALSE}
+
 options(htmltools.dir.version = FALSE)
-library(knitr)
+
+if (!require(pacman)) install.packages('pacman', repos = 'https://cran.rstudio.com')
+pacman::p_load(knitr, tidyverse, pagedown, kableExtra, formatR)
+
 opts_chunk$set(
   fig.align="center",  
   fig.height=4, #fig.width=6,
@@ -41,8 +45,23 @@ opts_chunk$set(
   dpi=300, #fig.path='Figs/',
   cache=T#, echo=F, warning=F, message=F
   )
-library(tidyverse)
-library(pagedown)
+
+# save the built-in output hook
+hook_output <- knitr::knit_hooks$get("output")
+
+# set a new output hook to truncate text output
+knitr::knit_hooks$set(output = function(x, options) {
+  if (!is.null(n <- options$out.lines)) {
+    x <- xfun::split_lines(x)
+    if (length(x) > n) {
+      # truncate the output
+      x <- c(head(x, n), "....\n")
+    }
+    x <- paste(x, collapse = "\n")
+  }
+  hook_output(x, options)
+})
+
 ```
 
 # overview
@@ -93,7 +112,7 @@ The first line can be read as, specifying the dataframe, filtering the rows and 
 class: inverse, center, middle
 name: dplyr
 
-# dplyr
+# dplyr | tidyr
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html>
 
@@ -355,6 +374,14 @@ df %>%
   summarize(across(c("pop","gdpPercap"), mean))
 ```
 
+.code-bg-stata[
+```{r, eval=F}
+# Stata equivalent
+bysort continent year: egen mean_pop = mean(pop)
+bysort continent year: egen median_gdppc = median(gdpPercap)
+collapse (mean) mean_pop median_gdppc, by(continent year)
+```
+]
 
 ---
 # group operations (1/n)
@@ -366,7 +393,7 @@ df %>%
   mutate(mean_pop = mean(pop)) # group wise operation to perform
 ```
 
-The `dplyr` pipe operation implies that dataset is grouped as long as a separate `ungroup()` function is provided. It's a healthy practice to provide `ungroup()` function after the end of the grouped operation.
+The `dplyr` pipe operation implies that dataset is grouped as long as a separate `ungroup()` function is provided. It's a healthy practice to provide `ungroup()` function after the end of the grouped operation to avoid confusion.
 ```{r, eval=F}
 df %>% 
   group_by(continent, year) %>% # grouping variables
@@ -383,21 +410,127 @@ egen mean_gdppc = mean(gdpPercap)
 ```
 ]
 
+---
+# group operations (2/n)
+
+```{r, eval=T, message=F}
+df %>% 
+  group_by(continent, year) %>% # grouping variables
+  summarize(mean_pop = mean(pop), mean_gdppc = mean(gdpPercap)) # group wise operation
+```
 
 ---
-# reshape - long to wide
+# reshape - long to wide (1/n)
+
+Dataframes can be transformed from long to wide using the `tidyr::pivot_wider()` function. Here's how the long dataframe looks.
+
+```{r, eval=T}
+df 
+```
+
+---
+# reshape - long to wide (2/n)
+
+Transforming from long to wide.
+```{r, eval=T, out.lines=10}
+df_wide = df %>%
+  pivot_wider(names_from = year, values_from = c("lifeExp", "pop", "gdpPercap"))
+df_wide
+```
+
+.code-bg-stata[
+```{r, eval=F}
+# Stata equivalent
+reshape wide lifeExp pop gdpPercap, i(continent country) j(year)
+```
+]
+
+---
+# reshape - wide to long (3/n)
+Dataframes can be transformed from wide to long using the `tidyr::pivot_longer()` function. We can transform the dataframe created earlier by,
+
+
+```{r, eval=T, out.lines=10}
+df_wide %>%
+  pivot_longer(cols = c(-continent, -country), names_to = c("type", "year"),
+               names_sep = "_", values_to = "values")
+```
+
+.code-bg-stata[
+```{r, eval=F}
+# Stata equivalent
+reshape long lifeExp pop gdpPercap, i(continent country) j(year)
+```
+]
+
+---
+# reshape - wide to long (4/n)
+
+You might have noticed that the long data doesn't look like the original long data. The original data was partially long, so we'll have to convert it back to wide.
+```{r, eval=T}
+df_wide %>% # wide data
+  pivot_longer(cols = c(-continent, -country), names_to = c("type", "year"),
+               names_sep = "_", values_to = "values") %>% # long data
+  pivot_wider(names_from = "type", values_from = "values") # original data
+```
 
 
 ---
-# reshape (cont.) - wide to long
+# merging dataframes (1/n)
 
+Two dataframes can be joined using using keys with the `*_join()` suite of functions. Dataframe X and Y can be merged using, 
+1. `inner_join(X, Y, by = "COL_NAME")` - includes all rows of X and Y.    
+    
+2. `left_join(X, Y, by = "COL_NAME")` - includes all rows of X        
+    
+3. `right_join(X, Y, by = "COL_NAME")` - includes all rows of Y       
+    
+4. `full_join(X, Y, by = "COL_NAME")` - includes all rows of X or Y
+
+.code-bg-stata[
+```{r, eval=F}
+# Stata equivalent
+merge 1:1 `Y` using COL_NAME
+merge m:1 `Y` using COL_NAME
+merge 1:m `Y` using COL_NAME
+merge m:m `Y` using COL_NAME
+```
+]
 
 ---
-# merging columns
+# merging dataframes (2/n)
 
+Let's use the approval ratings of US Presidents from `datasets::presidents`, which is pre-installed in R and merge it with the `gapminder::gapminder` data. The data is a quarterly time-series data so we perform some basic manipulation first.
+
+```{r, eval=T, out.lines = 10}
+
+df_presidents = data.frame(year = time(datasets::presidents),
+                           rating = as.matrix(datasets::presidents)) %>%
+  mutate(year = substr(year,1,4)) %>%
+  group_by(year) %>%
+  summarise(approval_rating = mean(rating, na.rm=T)) # rating by year
+
+df_presidents
+
+```
 
 ---
-# merging rows
+# merging dataframes (3/n)
+
+```{r, eval=T}
+
+df %>% 
+  mutate(year = as.character(year)) %>%
+  left_join(df_presidents, by = "year")
+
+```
+Since the `datasets::presidents` only contained data from 1945 to 1974, merged values after 1974 are missing (coded as `NA`).
+
+---
+# appending rows
+
+---
+# rename columns
 
 ---
 
@@ -412,8 +545,8 @@ name: data.table
 
 
 
-```{r gen_pdf, include = FALSE, cache = FALSE, eval = FALSE}
-pagedown::chrome_print("01_datamanipulation.html", output = "01_datamanipulation.pdf")
+```{r gen_pdf, include = FALSE, cache = FALSE, eval = FALSE, warning=FALSE}
+pagedown::chrome_print("02_datamanipulation.html", output = "02_datamanipulation.pdf")
 ```
 
 
