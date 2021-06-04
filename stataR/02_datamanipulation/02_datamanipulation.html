@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Introduction to R for Stata Users</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Purushottam Mohanty" />
+    <meta name="date" content="2021-06-04" />
+    <script src="02_datamanipulation_files/header-attrs/header-attrs.js"></script>
+    <link href="02_datamanipulation_files/remark-css/default.css" rel="stylesheet" />
+    <link href="02_datamanipulation_files/remark-css/metropolis.css" rel="stylesheet" />
+    <link href="02_datamanipulation_files/remark-css/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Introduction to R for Stata Users
+## 02: Data Manipulation
+### Purushottam Mohanty
+### 04 June 2021
+
+---
+
+
+&lt;style type="text/css"&gt;
+# CSS for including pauses in printed PDF output (see bottom of lecture)
+@media print {
+  .has-continuation {
+    display: block !important;
+  }
+}
+
+.code-bg-stata .remark-code, .code-bg-stata .remark-code * {
+ background-color:Silver!important;
+}
+
+&lt;/style&gt;
+
+
+
+
+# overview
+
+Data manipulation or data cleaning is an important aspect of any project and it is important to be well acquainted with all the tools provided by R to facilitate an easy transition from Stata to R.   
+    
+While Stata has specific commands for specific data cleaning operations, R is more versatile and often the same operation can be performed in multiple ways through different packages.           
+      
+In this slide deck I use `dplyr` and `tidyr` packages to perform data manipulation operations. The same tasks can also be performed using `baseR` functions but they are often more complicated and cumbersome.    
+    
+I also provide equivalent commands in Stata where possible to help easily understand R functions.
+
+---
+
+# tidyverse
+
+The `tidyverse` package in R is a composite of many different data manipulation, functional programming and data visualization packages. Check documentation about [tidyverse](https://www.tidyverse.org/packages/), [dplyr](https://dplyr.tidyverse.org) and [tidyr](https://tidyr.tidyverse.org) for more information.
+
+
+```r
+# only loads the primary tidyverse packages 
+library(tidyverse) 
+tidyverse_packages()
+```
+
+```
+##  [1] "broom"         "cli"           "crayon"        "dbplyr"       
+##  [5] "dplyr"         "dtplyr"        "forcats"       "googledrive"  
+##  [9] "googlesheets4" "ggplot2"       "haven"         "hms"          
+## [13] "httr"          "jsonlite"      "lubridate"     "magrittr"     
+## [17] "modelr"        "pillar"        "purrr"         "readr"        
+## [21] "readxl"        "reprex"        "rlang"         "rstudioapi"   
+## [25] "rvest"         "stringr"       "tibble"        "tidyr"        
+## [29] "xml2"          "tidyverse"
+```
+
+Packages like `ggplot2` for data visualization, `forcats` for handling categorical data and `stringr` for text manipulation enable so many possibilities. Packages within tidyverse can be separately loaded as well.
+
+---
+
+# pipe %&gt;% operator
+
+Many different packages in R, including `tidyr` and `dplyr` follow the pipe `%&gt;%` operator syntax which makes way for clean looking code and saves considerable time by not having to specify the dataframe name everytime.
+
+
+
+
+```r
+# both lines are equivalent
+df %&gt;% filter(!continent == 'Europe') %&gt;% group_by(continent, year) %&gt;% 
+  summarize(mean_gdppc = mean(gdpPercap))
+summarise(group_by(filter(df, !continent == 'Europe'), continent, year), mean_gdppc = mean(gdpPercap))
+```
+
+The first line can be read as, specifying the dataframe, filtering the rows and then grouping based on column names and the summarizing the gdpPercap variable. As you can see the first line is easier to read and logical in nature. With complicated and lengthy code, `%&gt;%` operator becomes extremely handy.
+
+---
+
+class: inverse, center, middle
+name: dplyr
+
+# dplyr
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=796px&gt;&lt;/html&gt;
+
+---
+
+
+# create new columns (1/n)
+
+In R, new columns can be created using `dplyr::mutate()` function.
+
+```r
+df %&gt;% 
+  mutate(pop_mn = pop / 1000000)
+```
+
+Note that `mutate()` creates a new column if dataframe `df` doesn't have a column with the specified namespace (i.e. `pop_mn`) or overwrites the existing column. So, `mutate()` is a substitute for Stata commands `generate` and `replace` depending on the namespace provided.  
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+generate pop_mn = pop / 1000000
+replace pop_mn = pop / 1000000
+```
+]
+
+---
+# create new column (2/n)
+
+The original dataframe imported from the `gapminder` package.
+
+```r
+df 
+```
+
+```
+## # A tibble: 1,704 x 6
+##    country     continent  year lifeExp      pop gdpPercap
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;
+##  1 Afghanistan Asia       1952    28.8  8425333      779.
+##  2 Afghanistan Asia       1957    30.3  9240934      821.
+##  3 Afghanistan Asia       1962    32.0 10267083      853.
+##  4 Afghanistan Asia       1967    34.0 11537966      836.
+##  5 Afghanistan Asia       1972    36.1 13079460      740.
+##  6 Afghanistan Asia       1977    38.4 14880372      786.
+##  7 Afghanistan Asia       1982    39.9 12881816      978.
+##  8 Afghanistan Asia       1987    40.8 13867957      852.
+##  9 Afghanistan Asia       1992    41.7 16317921      649.
+## 10 Afghanistan Asia       1997    41.8 22227415      635.
+## # … with 1,694 more rows
+```
+
+
+---
+# create new column (3/n)
+
+New column `pop_mn` has been created.
+
+```r
+df %&gt;% 
+  mutate(pop_mn = pop / 1000000)
+```
+
+```
+## # A tibble: 1,704 x 7
+##    country     continent  year lifeExp      pop gdpPercap pop_mn
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;  &lt;dbl&gt;
+##  1 Afghanistan Asia       1952    28.8  8425333      779.   8.43
+##  2 Afghanistan Asia       1957    30.3  9240934      821.   9.24
+##  3 Afghanistan Asia       1962    32.0 10267083      853.  10.3 
+##  4 Afghanistan Asia       1967    34.0 11537966      836.  11.5 
+##  5 Afghanistan Asia       1972    36.1 13079460      740.  13.1 
+##  6 Afghanistan Asia       1977    38.4 14880372      786.  14.9 
+##  7 Afghanistan Asia       1982    39.9 12881816      978.  12.9 
+##  8 Afghanistan Asia       1987    40.8 13867957      852.  13.9 
+##  9 Afghanistan Asia       1992    41.7 16317921      649.  16.3 
+## 10 Afghanistan Asia       1997    41.8 22227415      635.  22.2 
+## # … with 1,694 more rows
+```
+
+---
+# create new column (4/n)
+
+Let's overwite `pop_mn` where `pop_mn` is log of population. Note how the old `pop_mn` column is overwritten with log population values. Also, see how the `%&gt;%` function allows us to perform multiple operations on the same dataframe.
+
+```r
+df %&gt;% 
+  mutate(pop_mn = pop / 1000000) %&gt;%
+  mutate(pop_mn = log(pop))
+```
+
+```
+## # A tibble: 1,704 x 7
+##    country     continent  year lifeExp      pop gdpPercap pop_mn
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;  &lt;dbl&gt;
+##  1 Afghanistan Asia       1952    28.8  8425333      779.   15.9
+##  2 Afghanistan Asia       1957    30.3  9240934      821.   16.0
+##  3 Afghanistan Asia       1962    32.0 10267083      853.   16.1
+##  4 Afghanistan Asia       1967    34.0 11537966      836.   16.3
+##  5 Afghanistan Asia       1972    36.1 13079460      740.   16.4
+##  6 Afghanistan Asia       1977    38.4 14880372      786.   16.5
+##  7 Afghanistan Asia       1982    39.9 12881816      978.   16.4
+##  8 Afghanistan Asia       1987    40.8 13867957      852.   16.4
+##  9 Afghanistan Asia       1992    41.7 16317921      649.   16.6
+## 10 Afghanistan Asia       1997    41.8 22227415      635.   16.9
+## # … with 1,694 more rows
+```
+
+---
+
+# filter rows (1/n)
+
+In R rows can be filtered using `dplyr::filter()` function.
+
+```r
+df %&gt;% 
+  filter(continent == "Europe")
+```
+This keeps only those rows for which continent is Europe. Similarly, for keeping all rows outside continent Europe one can use the "!=" logical operation. Multiple conditions can also be specified using,
+
+```r
+df %&gt;% 
+  filter(continent %in% c("Europe", "Africa"))
+df %&gt;% 
+  filter(continent == "Europe" | continent == "Africa")
+```
+Both lines above are equivalent. Note how the `%in%` syntax makes code much more concise and readable.
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+keep if continent == "Europe"
+keep if continent == "Europe" | continent == "Africa"
+```
+]
+
+---
+# filter rows (2/n)
+
+Only keeps the rows where continent is Europe.
+
+```r
+df %&gt;% 
+  filter(continent == "Europe")
+```
+
+```
+## # A tibble: 360 x 6
+##    country continent  year lifeExp     pop gdpPercap
+##    &lt;fct&gt;   &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;   &lt;int&gt;     &lt;dbl&gt;
+##  1 Albania Europe     1952    55.2 1282697     1601.
+##  2 Albania Europe     1957    59.3 1476505     1942.
+##  3 Albania Europe     1962    64.8 1728137     2313.
+##  4 Albania Europe     1967    66.2 1984060     2760.
+##  5 Albania Europe     1972    67.7 2263554     3313.
+##  6 Albania Europe     1977    68.9 2509048     3533.
+##  7 Albania Europe     1982    70.4 2780097     3631.
+##  8 Albania Europe     1987    72   3075321     3739.
+##  9 Albania Europe     1992    71.6 3326498     2497.
+## 10 Albania Europe     1997    73.0 3428038     3193.
+## # … with 350 more rows
+```
+
+---
+# filter rows (3/n)
+
+Keeps all rows where continent is either Europe or Africa. (check no. of rows)
+
+```r
+df %&gt;% 
+  filter(continent %in% c("Africa", "Europe"))
+```
+
+```
+## # A tibble: 984 x 6
+##    country continent  year lifeExp     pop gdpPercap
+##    &lt;fct&gt;   &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;   &lt;int&gt;     &lt;dbl&gt;
+##  1 Albania Europe     1952    55.2 1282697     1601.
+##  2 Albania Europe     1957    59.3 1476505     1942.
+##  3 Albania Europe     1962    64.8 1728137     2313.
+##  4 Albania Europe     1967    66.2 1984060     2760.
+##  5 Albania Europe     1972    67.7 2263554     3313.
+##  6 Albania Europe     1977    68.9 2509048     3533.
+##  7 Albania Europe     1982    70.4 2780097     3631.
+##  8 Albania Europe     1987    72   3075321     3739.
+##  9 Albania Europe     1992    71.6 3326498     2497.
+## 10 Albania Europe     1997    73.0 3428038     3193.
+## # … with 974 more rows
+```
+
+
+---
+
+# filter columns (1/n)
+
+In R, columns can be filtered using the `dplyr::select()` function. 
+
+```r
+df %&gt;% 
+  select(continent)
+df %&gt;%
+  select(country, continent)
+```
+
+Similarly, columns can be dropped using a `-` sign before the column name 
+
+```r
+df %&gt;% 
+  select(-country, -continent)
+```
+
+Unlike Stata, for R both keeping and dropping columns is done using the same function. Also, one can use `select()` to order columns with or without dropping columns using the `select(columnA, columnB, everything())` syntax. The `everything()` function selects all columns not specified in `select()`.
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+keep country continent 
+drop country continent
+```
+]
+
+---
+# filter columns (2/n)
+
+```r
+df %&gt;% 
+  dplyr::select(continent, country)
+```
+
+```
+## # A tibble: 1,704 x 2
+##    continent country    
+##    &lt;fct&gt;     &lt;fct&gt;      
+##  1 Asia      Afghanistan
+##  2 Asia      Afghanistan
+##  3 Asia      Afghanistan
+##  4 Asia      Afghanistan
+##  5 Asia      Afghanistan
+##  6 Asia      Afghanistan
+##  7 Asia      Afghanistan
+##  8 Asia      Afghanistan
+##  9 Asia      Afghanistan
+## 10 Asia      Afghanistan
+## # … with 1,694 more rows
+```
+
+---
+# filter columns (3/n)
+
+```r
+df %&gt;% 
+  dplyr::select(-continent, -country)
+```
+
+```
+## # A tibble: 1,704 x 4
+##     year lifeExp      pop gdpPercap
+##    &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;
+##  1  1952    28.8  8425333      779.
+##  2  1957    30.3  9240934      821.
+##  3  1962    32.0 10267083      853.
+##  4  1967    34.0 11537966      836.
+##  5  1972    36.1 13079460      740.
+##  6  1977    38.4 14880372      786.
+##  7  1982    39.9 12881816      978.
+##  8  1987    40.8 13867957      852.
+##  9  1992    41.7 16317921      649.
+## 10  1997    41.8 22227415      635.
+## # … with 1,694 more rows
+```
+
+
+---
+# order rows (1/n)
+
+In R, rows can be ordered is ascending or descending order using the `dplyr::arrange()` function.
+
+```r
+df %&gt;% 
+  arrange(year, gdpPercap) # ascending order
+df %&gt;%
+  arrange(desc(year), desc(gdpPercap)) # descending order
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+sort year gdpPercap
+gsort -year -gdpPercap # using gtools
+```
+]
+
+---
+# order rows (2/n)
+
+
+```r
+df %&gt;% 
+  arrange(year, gdpPercap) # ascending order
+```
+
+```
+## # A tibble: 1,704 x 6
+##    country           continent  year lifeExp       pop gdpPercap
+##    &lt;fct&gt;             &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;     &lt;int&gt;     &lt;dbl&gt;
+##  1 Lesotho           Africa     1952    42.1    748747      299.
+##  2 Guinea-Bissau     Africa     1952    32.5    580653      300.
+##  3 Eritrea           Africa     1952    35.9   1438760      329.
+##  4 Myanmar           Asia       1952    36.3  20092996      331 
+##  5 Burundi           Africa     1952    39.0   2445618      339.
+##  6 Ethiopia          Africa     1952    34.1  20860941      362.
+##  7 Cambodia          Asia       1952    39.4   4693836      368.
+##  8 Malawi            Africa     1952    36.3   2917802      369.
+##  9 Equatorial Guinea Africa     1952    34.5    216964      376.
+## 10 China             Asia       1952    44   556263527      400.
+## # … with 1,694 more rows
+```
+
+---
+# order rows (3/n)
+
+
+```r
+df %&gt;%
+  arrange(desc(year), desc(gdpPercap)) # descending order
+```
+
+```
+## # A tibble: 1,704 x 6
+##    country          continent  year lifeExp       pop gdpPercap
+##    &lt;fct&gt;            &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;     &lt;int&gt;     &lt;dbl&gt;
+##  1 Norway           Europe     2007    80.2   4627926    49357.
+##  2 Kuwait           Asia       2007    77.6   2505559    47307.
+##  3 Singapore        Asia       2007    80.0   4553009    47143.
+##  4 United States    Americas   2007    78.2 301139947    42952.
+##  5 Ireland          Europe     2007    78.9   4109086    40676.
+##  6 Hong Kong, China Asia       2007    82.2   6980412    39725.
+##  7 Switzerland      Europe     2007    81.7   7554661    37506.
+##  8 Netherlands      Europe     2007    79.8  16570613    36798.
+##  9 Canada           Americas   2007    80.7  33390141    36319.
+## 10 Iceland          Europe     2007    81.8    301931    36181.
+## # … with 1,694 more rows
+```
+
+---
+# distinct (1/n)
+
+In R, duplicates can be removed from a dataframe using `dplyr::distinct()` function. The `.keep_all = T` option ensures that all columns are kept after removal of the duplicates.
+
+```r
+df %&gt;% 
+  distinct(.keep_all = T)
+```
+
+Duplicates can also be removed from a particular column using,
+
+```r
+df %&gt;% 
+  distinct(country, .keep_all = T)
+```
+
+The `distinct()` can also be used to view unique values for a column(s).
+
+```r
+df %&gt;% 
+  distinct(country) # all countries present in df
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+duplicates drop # for all rows
+duplicates drop country, force # for a column
+duplicates report country
+```
+]
+
+---
+# distinct (2/n)
+
+```r
+df %&gt;% 
+  distinct(.keep_all = T)
+```
+
+```
+## # A tibble: 1,704 x 6
+##    country     continent  year lifeExp      pop gdpPercap
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;
+##  1 Afghanistan Asia       1952    28.8  8425333      779.
+##  2 Afghanistan Asia       1957    30.3  9240934      821.
+##  3 Afghanistan Asia       1962    32.0 10267083      853.
+##  4 Afghanistan Asia       1967    34.0 11537966      836.
+##  5 Afghanistan Asia       1972    36.1 13079460      740.
+##  6 Afghanistan Asia       1977    38.4 14880372      786.
+##  7 Afghanistan Asia       1982    39.9 12881816      978.
+##  8 Afghanistan Asia       1987    40.8 13867957      852.
+##  9 Afghanistan Asia       1992    41.7 16317921      649.
+## 10 Afghanistan Asia       1997    41.8 22227415      635.
+## # … with 1,694 more rows
+```
+
+---
+# distinct (3/n)
+
+```r
+df %&gt;% 
+  distinct(country, .keep_all = T)
+```
+
+```
+## # A tibble: 142 x 6
+##    country     continent  year lifeExp      pop gdpPercap
+##    &lt;fct&gt;       &lt;fct&gt;     &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;
+##  1 Afghanistan Asia       1952    28.8  8425333      779.
+##  2 Albania     Europe     1952    55.2  1282697     1601.
+##  3 Algeria     Africa     1952    43.1  9279525     2449.
+##  4 Angola      Africa     1952    30.0  4232095     3521.
+##  5 Argentina   Americas   1952    62.5 17876956     5911.
+##  6 Australia   Oceania    1952    69.1  8691212    10040.
+##  7 Austria     Europe     1952    66.8  6927772     6137.
+##  8 Bahrain     Asia       1952    50.9   120447     9867.
+##  9 Bangladesh  Asia       1952    37.5 46886859      684.
+## 10 Belgium     Europe     1952    68    8730405     8343.
+## # … with 132 more rows
+```
+
+---
+# distinct (4/n)
+
+```r
+df %&gt;% 
+  distinct(country) 
+```
+
+```
+## # A tibble: 142 x 1
+##    country    
+##    &lt;fct&gt;      
+##  1 Afghanistan
+##  2 Albania    
+##  3 Algeria    
+##  4 Angola     
+##  5 Argentina  
+##  6 Australia  
+##  7 Austria    
+##  8 Bahrain    
+##  9 Bangladesh 
+## 10 Belgium    
+## # … with 132 more rows
+```
+
+---
+# summarize (1/n)
+
+Summarize operates with `mutate()` at the backend and creates a new dataframe with specified columns based on the statistics specified. Note that `summarize()` and `summarise()` are equivalent to each other and can be interchanged. 
+
+```r
+df %&gt;% 
+  summarize(mean_pop = mean(pop), median_gdppc = median(gdpPercap))
+```
+
+Summarise can be performed across multiple columns in combination with the `across()` function.
+
+```r
+df %&gt;% 
+  summarize(across(c("pop","gdpPercap"), mean))
+```
+
+.code-bg-stata[
+
+```r
+# Stata equivalent
+collapse (mean) pop (median) gdpPercap
+```
+]
+
+---
+# summarize (2/n)
+
+
+```r
+df %&gt;% 
+  summarize(mean_pop = mean(pop), median_gdppc = median(gdpPercap))
+```
+
+```
+## # A tibble: 1 x 2
+##    mean_pop median_gdppc
+##       &lt;dbl&gt;        &lt;dbl&gt;
+## 1 29601212.        3532.
+```
+
+
+```r
+df %&gt;% 
+  summarize(across(c("pop","gdpPercap"), mean))
+```
+
+```
+## # A tibble: 1 x 2
+##         pop gdpPercap
+##       &lt;dbl&gt;     &lt;dbl&gt;
+## 1 29601212.     7215.
+```
+
+
+---
+# group operations
+
+
+---
+# reshape - long to wide
+
+
+---
+# reshape (cont.) - wide to long
+
+
+---
+# merging columns
+
+
+---
+# merging rows
+
+---
+
+class: inverse, center, middle
+name: data.table
+
+# data.table
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=796px&gt;&lt;/html&gt;
+
+---
+
+
+
+
+
+
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

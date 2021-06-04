@@ -40,7 +40,7 @@ library(pagedown)
 ```
 
 
-# Why switch to R?
+# why switch to R?
 
 While this is not an exhaustive list, the primary reasons can be listed as:       
 - R is a free and open source software making it accessible for students and researchers across the world. (goodbye to license worries!)
@@ -53,7 +53,7 @@ While this is not an exhaustive list, the primary reasons can be listed as:
 
 ---
 
-# Installing R and RStudio
+# installing R and RStudio
 
 The latest version of **R** can be installed from The Comprehensive R Archive Network (CRAN).     
 1. Download R for [macOS](https://cran.r-project.org/bin/macosx/).<sup>1</sup>
@@ -69,7 +69,7 @@ In order to take complete advantage of R, download **RStudio** too. RStudio is a
 
 ---
 
-# Basics of R
+# basics of R
 
 1. R is an object oriented language. Every dataset, figure, text, string, number or regression result is or can be stored as an object.      
     
@@ -83,13 +83,13 @@ In order to take complete advantage of R, download **RStudio** too. RStudio is a
 
 ---
 
-# Key Differences from Stata
+# key differences from Stata
 
 1. In Stata `ssc install` is run once to install and access a particular package whereas in R packages can to be installed once but loaded into memory everytime.    
 
 2. In R one can use multiple dataframes (i.e. datasets) simultaneously so no need to constantly dabble with `preserve`, `restore` and `tempsave`.       
 
-3. Since, everything is stored as objects in R one easily access elements within objects through consistent syntax.   
+3. Since everything is stored as objects in R one easily access elements within objects through consistent syntax.   
 
 3. While `putdocx` in Stata can be helpful, RMarkdown provides much easier ways to write latex documents or beamer presentations and export them as PDFs or html.        
     
@@ -97,7 +97,7 @@ In order to take complete advantage of R, download **RStudio** too. RStudio is a
 
 ---
 
-# Additional Resources
+# additional resources
 
 1. [R for Data Science](https://r4ds.had.co.nz/index.html) - by Hadley Wickhman and Garrett Grolemund.    
 
@@ -112,8 +112,24 @@ In order to take complete advantage of R, download **RStudio** too. RStudio is a
 5. [R Markdown: The Definitive Guide](https://bookdown.org/yihui/rmarkdown/) - by Yihui Xie, J. J. Allaire, Garrett Grolemund
 
 ---
+# good programming practices
 
-# Installing Packages
+Before we proceed, let's go over some good programming practices which should be followed irrespective of the programming language used.    
+1. Always use **relative paths** in your code. (i.e. set working directory and all paths should be relative to that base) Never hardcode paths to import or export files as it makes it extremely time consuming for another user to replicate.
+
+2. Provide detailed **annotations** to your code to make sure it is easy for another user to understand. In R one can use `#` to provide annotations and they work on a new line or after the end of a code. 
+    
+3. Code should always be **indented properly** and provide spaces where possible. Unlike some other programming languages like Python, R is not indentation sensitive. Unlike Stata, R is not line sensitive either which means code can be written in multiple lines. 
+    
+4. Do not write lengthy horizontal code. **Vertical** space is free and unlimited so use it extensively. This allows for readable code even while working on a small display.    
+    
+5. Use **version control** (i.e. git or github) especially while collaborating with others on a project.    
+
+
+
+---
+
+# installing packages
 
 First, open RStudio > New File > R Script and save it in the directory of choice. Let's install the `tidyverse` and `gapminder` packages using,
 ```{r eval=F}
@@ -134,8 +150,21 @@ pacman::p_load(tidyverse, gapminder)
 The `PACKAGE::function()` syntax allows one to use functions from installed packages without loading them.
 
 ---
+# help
 
-# Object Types
+In R, help can be accessed using `?FUNCTION` syntax. For example,
+```{r eval=F}
+?library()
+```
+In RStudio, this directly opens up the *Help* tab and shows the helpfile of the `library()` function. The helpfile includes the package to which the function belongs to, options and defaults for the function, examples and links to detailed package documentation.     
+    
+In RStudio one can also go to the *Help* tab and type the function in the search box.         
+    
+Note that help shall only display the helpfile for a function which has been installed irrespective of whether it has been loaded into the R environment or not.
+
+---
+
+# object types
 
 R objects can be of different `class` depending on the type of data that is assigned to them.
 ```{r eval=F}
@@ -144,11 +173,11 @@ x = "London"
 # numeric
 x = 100
 # list
-x = as.list(c("London","Paris","Zurich","Madrid","Amsterdam"))
+x = list(c("London","Paris","Zurich","Madrid","Amsterdam"))
 # dataframe
 x = read_csv("./example.csv")
 ```
-There are a large number of object types used in R but `character`, `numeric`, `list`, `dataframe` and `matrix` are the most commonly used ones. Objects can also be transformed between types.   
+There are a large number of object types used in R and objects can also be transformed between types. The `c()` (i.e. combine) function combines its elements into a vector. Vectors are everywhere in R so `c()` is used almost everywhere.
     
 The object type determines the operations that can be performed on the object.
 ```{r eval=F}
@@ -159,7 +188,7 @@ x + y # cannot be performed (numeric + character)
 
 ---
 
-# Reading Files
+# reading files
 
 Before we proceed to reading different file formats, let's set the base directory first,
 ```{r eval=F}
@@ -185,7 +214,7 @@ Similarly, there are other packages to load SAS, SPSS, TIFF or other files.
 
 ---
 
-# Dataframes 
+# dataframes 
 
 Datasets in R are called `dataframe`. If you tried any of the functions listed earlier to read files you would notice that while they appear in the console, there is no way to access them. In order to do so, we need to store them as an object. This can be done using,
 ``` {r eval=F}
@@ -201,7 +230,7 @@ df = data.frame(names = c("London","Paris","Zurich","Madrid","Amsterdam"),
 
 ---
 
-# Dataframes (cont.)
+# dataframes (cont.)
       
 For the current tutorial however we shall data from `gapminder` package. The package provides life expectancy, GDP per capita, and population data at the country level for every 5 years from 1952 to 2007.
 ``` {r}
@@ -211,7 +240,7 @@ df
 
 ---
 
-# Indexing 
+# indexing 
 
 All elements within objects in R can be accessed using row and column index or names. R follows a consistent form of indexing which is applicable to all class of objects.     
     
@@ -223,7 +252,7 @@ df[1, 'lifeExp']
 
 ---
 
-# Indexing (cont.)
+# indexing (cont.)
 
 Multiple rows or columns can also be indexed.
 ``` {r}
@@ -238,9 +267,34 @@ df[4] # all rows - column 4
 ```
 
 
+---
+# transforming objects
 
-```{r gen_pdf, include = FALSE, cache = FALSE, eval = TRUE}
-# pagedown::chrome_print("01_stataR.html", output = "01_stataR.pdf")
+In R, any data (i.e. string, numeric, dataframe) can be stored in different formats which determines the class of the object. An object can be transformed into a different class using the `as.OBJECT_TYPE()` syntax.
+``` {r, eval=F}
+x = "London" # x is a character class
+y = as.data.frame(x) # y is a data frame
+z = as.list(x) # z is a list
+```
+
+Transforming data is sometimes necessary in order to perform various operations. Sometimes, a column can be stored as a `character` class when it's supposed to have been in `numeric`.     
+    
+When such operations are perfomred on columns in a dataframe it is similar to using Stata commands `destring` or `tostring`.     
+
+
+---
+# missing values
+
+In R missing values are indicated by `NA` (without quotes). Unlike Stata which handles missing values differently for numeric and string data, in R, `NA` is treated as missing irrespective of the object type.    
+    
+The function `is.na()` is a boolean operator (i.e. it only gives `TRUE` or `FALSE`) use to identify whether an object or element within an object is missing.     
+    
+Another uselful function is `na.rm = TRUE`
+
+
+
+```{r gen_pdf, include = FALSE, cache = FALSE, eval = FALSE}
+pagedown::chrome_print("01_stataR.html", output = "01_stataR.pdf")
 ```
 
 
